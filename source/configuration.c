@@ -9,10 +9,16 @@ System sys;
 Timer sysTimer;
 GPIO sysLED;
 /*GPIO sysButton;*/
-rtc sysClock;
+Rtc sysClock;
+Rcc sysRcc;
 
 void configureIt()
 {
+  sys.rcc = &sysRcc;
+  sys.rcc->sysClockSource = RCC_CLOCK_SOURCE_PLL;
+  sys.rcc->pllClockSource = RCC_CLOCK_SOURCE_HSE;
+  sys.rcc->sourceFreq = 8000000;
+  sys.rcc->sysclkFreq = 72000000;
   sys.rcc->hclkFreq = 72000000;
   sys.rcc->pclk1Freq = 36000000;
   sys.rcc->pclk2Freq = 72000000;

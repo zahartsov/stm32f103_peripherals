@@ -4,7 +4,6 @@
 #include "stm32f103xb.h"
 #include "gpio.h"
 #include "timer.h"
-#include "rtc.h"
 
 #define    DWT_CYCCNT    *(volatile unsigned long *)0xE0001004
 #define    DWT_CONTROL   *(volatile unsigned long *)0xE0001000
@@ -32,7 +31,18 @@ typedef struct
 
 typedef struct
 {
-  rtc* Clock;
+  uint8_t hours;
+  uint8_t minutes;
+  uint8_t seconds;
+  uint16_t year;
+  uint8_t month;
+  uint8_t day;
+  uint8_t weekDay;
+}Rtc;     // Параметры
+
+typedef struct
+{
+  Rtc* Clock;
   Timer* timer;
   GPIO* LED;
   Rcc* rcc;
@@ -45,7 +55,7 @@ typedef struct
 }System;     // Параметры системы
 
 extern System sys;
-extern rtc sysClock;
+extern Rtc sysClock;
 extern Timer sysTimer;
 extern GPIO sysLED;
 extern Rcc sysRcc;
@@ -54,6 +64,7 @@ extern Rcc sysRcc;
 //extern IndependentWatchDog IWatchDog;
 
 void RCC_Init(Rcc*);
+void RTC_Init(Rtc*);
 void System_Init(System*);
 void DelayMs(uint32_t);
 void DelayUs(uint32_t);

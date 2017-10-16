@@ -2056,9 +2056,6 @@
                 <name>$PROJ_DIR$\source\headers\gpio.h</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\source\headers\rtc.h</name>
-            </file>
-            <file>
                 <name>$PROJ_DIR$\source\headers\stm32f103xb.h</name>
             </file>
             <file>
@@ -2088,9 +2085,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\source\main.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\source\rtc.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\source\system.c</name>
