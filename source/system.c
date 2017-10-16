@@ -5,9 +5,105 @@
 
 #include "system.h"
 
+void RCC_Init(Rcc* rcc)
+{
+  if(rcc->sysClockSource == RCC_CLOCK_SOURCE_PLL)
+  {
+    //Настраиваем тактирование от HSE через PLL
+    if(rcc->pllClockSource == RCC_CLOCK_SOURCE_HSE)
+    {
+      if((rcc->sysclkFreq < 4000000) || (rcc->sysclkFreq > 72000000)) return;
+      //if(((rcc->sysclkFreq / rcc->sourceFreq) > 16) || (rcc->sysclkFreq < rcc->sourceFreq)) return;
+      //Включаем HSE
+      RCC->CR |= RCC_CR_HSEON;
+      while(!(RCC->CR & RCC_CR_HSERDY));
+      //Устанавливаем HSE в качестве источника тактирования для PLL
+      RCC->CFGR |= RCC_CFGR_PLLSRC;
+      /*Вычисляем значение делителей источника тактирования
+      Настройка будет удачной только если частота системного тика кратна частоте внешнего источника, делённой на 2
+      */
+      if((rcc->sysclkFreq % rcc->sourceFreq) == 0)
+      {
+        RCC->CFGR |= ((rcc->sysclkFreq / rcc->sourceFreq) - 2) << RCC_CFGR_PLLMULL9_Pos;
+      }
+      else if((rcc->sysclkFreq % (rcc->sourceFreq/2)) == 0)
+      {
+        RCC->CFGR |= RCC_CFGR_PLLXTPRE_HSE_DIV2;
+        RCC->CFGR |= ((rcc->sysclkFreq / (rcc->sourceFreq/2)) - 2) << RCC_CFGR_PLLMULL9_Pos;
+      }
+
+      //Вычисляем значение предделителя системной шины
+      //Предделитель - 2 в степени до 512
+      //Если предделитель получается не равным двойке в степени, он округляется в меньшую сторону
+      uint16_t tmp = (rcc->sysclkFreq / rcc->hclkFreq) >> 1;
+      uint16_t div = 0;
+      while(tmp)
+      {
+        tmp = tmp >> 1;
+        div++;
+      }
+      if(div != 0) div = 8 + div - 1;
+      RCC->CFGR |= div << RCC_CFGR_HPRE_Pos;
+
+      //Выичсляем значение предделителя первой периферийное шины
+      tmp = (rcc->hclkFreq / rcc->pclk1Freq) >> 1;
+      div = 0;
+      while(tmp)
+      {
+        tmp = tmp >> 1;
+        div++;
+      }
+      if(div != 0) div = 4 + div - 1;
+      RCC->CFGR |= div << RCC_CFGR_PPRE1_Pos;
+
+      //Выичсляем значение предделителя второй периферийное шины
+      tmp = (rcc->hclkFreq / rcc->pclk2Freq) >> 1;
+      div = 0;
+      while(tmp)
+      {
+        tmp = tmp >> 1;
+        div++;
+      }
+      if(div != 0) div = 4 + div - 1;
+      RCC->CFGR |= div << RCC_CFGR_PPRE2_Pos;
+
+      //Настраиваем FLASH в соответствии с установленной частотой
+      if(rcc->sysclkFreq > 48000000) FLASH->ACR |= FLASH_ACR_LATENCY_1;
+      else if(rcc->sysclkFreq > 24000000) FLASH->ACR |= FLASH_ACR_LATENCY_0;
+      else FLASH->ACR &= ~FLASH_ACR_LATENCY;
+
+      //Включаем PLL
+      RCC->CR |= RCC_CR_PLLON;
+      while(!(RCC->CR & RCC_CR_PLLRDY));
+
+      //Переключаемся на тактирование от PLL
+      RCC->CFGR |= RCC_CFGR_SW_1;
+      while(!(RCC->CFGR & RCC_CFGR_SWS_1));
+    }
+    //Настраиваем тактирование от HSI через PLL
+    else
+    {
+
+    }
+
+  }
+  //Настраиваем тактирование от HSE напрямую
+  else if(rcc->sysClockSource == RCC_CLOCK_SOURCE_HSE)
+  {
+
+  }
+  //Настраиваем тактирование от HSI напрямую
+  else if(rcc->sysClockSource == RCC_CLOCK_SOURCE_HSI)
+  {
+
+  }
+}
+
 void System_Init(System* system)
 {
   system->i2cAddress = 0x01;
+
+  RCC_Init(system->rcc);
 
   if(system->Clock)
   {
@@ -58,7 +154,7 @@ void System_Init(System* system)
 
   system->timer->baseTimer = (TIM_TypeDef*)TIM2_BASE;
   system->timer->mode = TIMER_MODE_COUNTER;
-  system->timer->timerAPBFreq = system->pclk1 * 2;
+  system->timer->timerAPBFreq = system->rcc->pclk1Freq * 2;
   system->timer->timerOneCount = 500;
   system->timer->timerPeriod = 500000;
   userTimer_Init(system->timer);

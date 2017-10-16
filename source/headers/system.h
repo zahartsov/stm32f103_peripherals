@@ -13,17 +13,32 @@
 #define OFF     0x01;
 #define ON      0x00;
 
+//Clock source
+#define RCC_CLOCK_SOURCE_LSI    0x01
+#define RCC_CLOCK_SOURCE_HSI    0x02
+#define RCC_CLOCK_SOURCE_HSE    0x03
+#define RCC_CLOCK_SOURCE_PLL    0x04
+
+typedef struct
+{
+  uint8_t sysClockSource;
+  uint8_t pllClockSource;
+  uint32_t sysclkFreq;
+  uint32_t sourceFreq;
+  uint32_t hclkFreq;
+  uint32_t pclk1Freq;
+  uint32_t pclk2Freq;
+}Rcc;
+
 typedef struct
 {
   rtc* Clock;
   Timer* timer;
   GPIO* LED;
+  Rcc* rcc;
   //GPIO* Button;
   //SleepMode* sleepMode;
   //IndependentWatchDog* IWatchDog;
-  uint32_t hclk;        //частота процессора, √ц
-  uint32_t pclk1;       //частота первой периферийной шины, √ц
-  uint32_t pclk2;       //частота второй периферийной шины, √ц
   uint8_t i2cAddress;
   uint8_t CPUtemperature;
   volatile unsigned long * takt;
@@ -33,14 +48,18 @@ extern System sys;
 extern rtc sysClock;
 extern Timer sysTimer;
 extern GPIO sysLED;
+extern Rcc sysRcc;
 //extern GPIO sysButton;
 //extern SleepMode sleepMode;
 //extern IndependentWatchDog IWatchDog;
 
+void RCC_Init(Rcc*);
 void System_Init(System*);
 void DelayMs(uint32_t);
 void DelayUs(uint32_t);
 void DelayNs(uint16_t);
 void InterruptsPrioritySet(void);
+
+uint32_t toPowerOfTwo(uint32_t);
 
 #endif

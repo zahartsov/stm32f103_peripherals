@@ -13,9 +13,9 @@ rtc sysClock;
 
 void configureIt()
 {
-  sys.hclk = 72000000;
-  sys.pclk1 = 36000000;
-  sys.pclk2 = 72000000;
+  sys.rcc->hclkFreq = 72000000;
+  sys.rcc->pclk1Freq = 36000000;
+  sys.rcc->pclk2Freq = 72000000;
   sys.timer = &sysTimer;
   sys.LED = &sysLED;
   /*sys.Button = &sysButton;*/
