@@ -11,6 +11,7 @@ GPIO sysLED;
 /*GPIO sysButton;*/
 Rtc sysClock;
 Rcc sysRcc;
+Iwdg sysIwdg;
 
 void configureIt()
 {
@@ -26,6 +27,7 @@ void configureIt()
   sys.LED = &sysLED;
   /*sys.Button = &sysButton;*/
   sys.Clock = &sysClock;
+  sys.iwdg = &sysIwdg;
 
   //IndependentWatchDog IWatchDog;
   //sys.IWatchDog = &IWatchDog;

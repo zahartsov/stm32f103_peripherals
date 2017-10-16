@@ -5,6 +5,43 @@
 
 #include "system.h"
 
+void IWDG_Init(Iwdg* IWatchDog)
+{
+  if(IWatchDog->debugMode) DBGMCU->CR |= DBGMCU_CR_DBG_IWDG_STOP;
+  else DBGMCU->CR &= ~DBGMCU_CR_DBG_IWDG_STOP;
+  IWDG->KR = 0x5555;
+  uint32_t tmp = 0;
+  tmp = (IWatchDog->frequancy * IWatchDog->watchPeriod) / 1000;
+  uint16_t tmp_prescaler = 0;
+  if(tmp < 0xFFF) tmp_prescaler = 0;
+  else
+  {
+    tmp /= 0xFFF;
+    uint8_t i = 0;
+    while(tmp != 0)
+    {
+      tmp = tmp >> 1;
+      i++;
+    }
+    tmp_prescaler = i - 2;
+  }
+
+  tmp = IWatchDog->frequancy / (0x01 << (tmp_prescaler + 2));
+  IWDG->RLR = (tmp * IWatchDog->watchPeriod) / 1000;
+  IWDG->PR = tmp_prescaler;
+  IWDG->KR = 0x00;
+}
+
+void IWDG_Enable()
+{
+  IWDG->KR = 0xCCCC;
+}
+
+void IWDG_Reload()
+{
+  IWDG->KR = 0xAAAA;
+}
+
 void RTC_Init(Rtc* rtc)
 {
   RCC->APB1ENR |= RCC_APB1ENR_PWREN | RCC_APB1ENR_BKPEN;
@@ -164,18 +201,18 @@ void System_Init(System* system)
     system->Button->type = GPIO_TYPE_PUSHPULL;
     userGPIO_Init(system->Button);
     userEXTI_Init(system->Button);
-  }
+  }*/
 
-  if(system->IWatchDog)
+  if(system->iwdg)
   {
-    system->IWatchDog->frequancy = 32000;
-    system->IWatchDog->watchPeriod = 3000;
-    system->IWatchDog->debugMode = IWDG_DEBUGMODE_STOP;
-    IWDG_Init(system->IWatchDog);
+    system->iwdg->frequancy = 40000;
+    system->iwdg->watchPeriod = 3000;
+    system->iwdg->debugMode = IWDG_DEBUGMODE_STOP;
+    IWDG_Init(system->iwdg);
     IWDG_Enable();
   }
 
-  if(system->sleepMode)
+  /*if(system->sleepMode)
   {
     system->sleepMode->debugMode = SLEEPMODE_DEBUGMODE_SLEEP_RUN | SLEEPMODE_DEBUGMODE_STOP_RUN | SLEEPMODE_DEBUGMODE_STANDBY_RUN;
     system->sleepMode->deepSleepModeEn = SLEEPMODE_SLEEPDEEP_ON;
@@ -263,6 +300,8 @@ void TIM2_IRQHandler()
 
   if(sys.LED->baseGPIO->IDR & (GPIO_IDR_IDR0 << sys.LED->pin)) sys.LED->baseGPIO->BSRR |= GPIO_BSRR_BR0 << sys.LED->pin;
   else sys.LED->baseGPIO->BSRR |= GPIO_BSRR_BS0 << sys.LED->pin;
+  
+  IWDG_Reload();
 }
 
 /*void EXTI0_IRQHandler()

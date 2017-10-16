@@ -4,3 +4,4 @@ RCC
 RTC
 sysLed - PC13
 sysTimer
+IWDG
